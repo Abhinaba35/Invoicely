@@ -36,10 +36,12 @@ const LoginPage = () => {
     return (
         <>
         <Navbar />
-        <div className="min-h-screen bg-gradient-to-br from-emerald-100 via-white to-emerald-200 flex items-center justify-center py-8">
-            <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-2xl border border-emerald-100 flex flex-col gap-6">
-                <h1 className="text-3xl font-extrabold text-emerald-700 mb-2 text-center tracking-tight drop-shadow">Login</h1>
-                <form className="flex flex-col gap-5 w-full" onSubmit={e => e.preventDefault()}>
+        <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200 flex items-center justify-center py-8">
+            <div className="w-full max-w-4xl p-0 bg-white rounded-2xl shadow-2xl border border-blue-100 flex flex-col md:flex-row gap-0">
+                {/* Left: Form */}
+                <div className="flex-1 p-8 flex flex-col gap-6 justify-center">
+                  <h1 className="text-3xl font-extrabold text-blue-700 mb-2 text-center tracking-tight drop-shadow">Login</h1>
+                  <form className="flex flex-col gap-5 w-full" onSubmit={e => e.preventDefault()}>
                     <div className="flex flex-col gap-1">
                         <label className="text-gray-700 font-medium" htmlFor="user-email">Email</label>
                         <input
@@ -78,7 +80,12 @@ const LoginPage = () => {
                             </Link>
                         </p>
                     </div>
-                </form>
+                  </form>
+                </div>
+                
+                <div className="hidden md:flex flex-1 items-center justify-center bg-blue-50 rounded-r-2xl">
+                  <img src="/access.svg" alt="Login illustration" className="w-4/5 max-w-xs mx-auto" />
+                </div>
             </div>
         </div>
         </>

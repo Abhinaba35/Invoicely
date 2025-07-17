@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../services/api";
 import InvoiceForm from "../components/InvoiceForm";
 import { Navbar } from "../components/navbar";
+import { ErrorToast } from "../utils/toastHelper";
 
 const InvoicePage = () => {
   const [invoices, setInvoices] = useState([]);
@@ -17,7 +18,7 @@ const InvoicePage = () => {
     setLoading(true);
     api.get("/invoices")
       .then(res => setInvoices(res.data))
-      .catch(err => setError(err.response?.data?.error || "Error fetching invoices"))
+      .catch(err => ErrorToast(err.response?.data?.error || "Error fetching invoices"))
       .finally(() => setLoading(false));
   }, [refresh]);
 
@@ -46,7 +47,7 @@ const InvoicePage = () => {
       setEditing(null);
       setRefresh(r => !r);
     } catch (err) {
-      alert(err.response?.data?.error || "Error updating invoice");
+      ErrorToast(err.response?.data?.error || "Error updating invoice");
     }
   };
 

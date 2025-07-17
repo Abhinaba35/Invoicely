@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
+import { ErrorToast } from "../utils/toastHelper";
 
 const ExpenseForm = ({ onSuccess, initial, isEdit, onSubmit }) => {
   const [form, setForm] = useState({ category: "", amount: "", date: "" });
@@ -18,7 +19,7 @@ const ExpenseForm = ({ onSuccess, initial, isEdit, onSubmit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    // setError(null);
     try {
       if (isEdit && onSubmit) {
         await onSubmit({ ...form, amount: Number(form.amount) });
@@ -28,7 +29,7 @@ const ExpenseForm = ({ onSuccess, initial, isEdit, onSubmit }) => {
         if (onSuccess) onSuccess();
       }
     } catch (err) {
-      setError(err.response?.data?.error || "Error creating expense");
+      ErrorToast(err.response?.data?.error || "Error creating expense");
     } finally {
       setLoading(false);
     }

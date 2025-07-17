@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../services/api";
 import ExpenseForm from "../components/ExpenseForm";
 import { Navbar } from "../components/navbar";
+import { ErrorToast } from "../utils/toastHelper";
 
 const ExpensePage = () => {
   const [expenses, setExpenses] = useState([]);
@@ -17,7 +18,7 @@ const ExpensePage = () => {
     setLoading(true);
     api.get("/expenses")
       .then(res => setExpenses(res.data))
-      .catch(err => setError(err.response?.data?.error || "Error fetching expenses"))
+      .catch(err => ErrorToast(err.response?.data?.error || "Error fetching expenses"))
       .finally(() => setLoading(false));
   }, [refresh]);
 
@@ -46,7 +47,7 @@ const ExpensePage = () => {
       setEditing(null);
       setRefresh(r => !r);
     } catch (err) {
-      alert(err.response?.data?.error || "Error updating expense");
+      ErrorToast(err.response?.data?.error || "Error updating expense");
     }
   };
 

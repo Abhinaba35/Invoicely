@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
+import { ErrorToast } from "../utils/toastHelper";
 
 const InvoiceForm = ({ onSuccess, initial, isEdit, onSubmit }) => {
   const [form, setForm] = useState({
     client: { name: "", email: "", address: "" },
     items: [{ description: "", quantity: 1, price: 0, tax: 0 }],
     dueDate: "",
+    status: "unpaid",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -31,7 +33,7 @@ const InvoiceForm = ({ onSuccess, initial, isEdit, onSubmit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    // setError(null);
     try {
       const item = form.items[0];
       const total = (Number(item.price)  * Number(item.tax)/100) + (Number(item.price) * Number(item.quantity));
@@ -39,11 +41,11 @@ const InvoiceForm = ({ onSuccess, initial, isEdit, onSubmit }) => {
         await onSubmit({ ...form, total });
       } else {
         await api.post("/invoices", { ...form, total });
-        setForm({ client: { name: "", email: "", address: "" }, items: [{ description: "", quantity: 1, price: 0, tax: 0 }], dueDate: "" });
+        setForm({ client: { name: "", email: "", address: "" }, items: [{ description: "", quantity: 1, price: 0, tax: 0 }], dueDate: "", status: "pending" });
         if (onSuccess) onSuccess();
       }
     } catch (err) {
-      setError(err.response?.data?.error || "Error creating invoice");
+      ErrorToast(err.response?.data?.error || "Error creating invoice");
     } finally {
       setLoading(false);
     }
@@ -88,6 +90,20 @@ const InvoiceForm = ({ onSuccess, initial, isEdit, onSubmit }) => {
       <div className="flex flex-col text-left">
         <label className="mb-1 font-medium text-blue-700">Due Date</label>
         <input name="dueDate" type="date" value={form.dueDate} onChange={handleChange} className="border border-blue-200 rounded-md py-2 px-3 text-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none transition" />
+      </div>
+      <div className="flex flex-col text-left">
+        <label className="mb-1 font-medium text-blue-700">Status</label>
+        <select
+          name="status"
+          value={form.status}
+          onChange={handleChange}
+          className="border border-blue-200 rounded-md py-2 px-3 text-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none transition"
+          required
+        >
+          <option value="unpaid">Unpaid</option>
+          <option value="paid">Paid</option>
+          <option value="overdue">Overdue</option>
+        </select>
       </div>
       <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-semibold shadow transition" disabled={loading}>{loading ? (isEdit ? "Saving..." : "Creating...") : (isEdit ? "Save Changes" : "Create Invoice")}</button>
     </form>

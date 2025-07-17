@@ -11,6 +11,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { ErrorToast } from "../utils/toastHelper";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -21,8 +22,11 @@ const DashboardPage = () => {
 
   useEffect(() => {
     api.get("/dashboard")
-      .then(res => setData(res.data))
-      .catch(err => setError(err.response?.data?.error || "Error fetching dashboard data"))
+      .then(res => {
+        setData(res.data);
+        console.log("Dashboard API response:", res.data);
+      })
+      .catch(err => ErrorToast(err.response?.data?.error || "Error fetching dashboard data"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -53,7 +57,7 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-100 via-white to-emerald-200">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200">
       <Navbar />
       <div className="p-8 max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-4 text-emerald-800 drop-shadow">Dashboard</h1>
@@ -117,4 +121,4 @@ const DashboardPage = () => {
   );
 };
 
-export { DashboardPage}; 
+export { DashboardPage};

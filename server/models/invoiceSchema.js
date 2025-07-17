@@ -16,7 +16,7 @@ const invoiceSchema = new mongoose.Schema({
     }
   ],
   total: Number,
-  status: { type: String, enum: ['paid', 'unpaid', 'overdue'], default: 'unpaid' },
+  status: { type: String, enum: ['unpaid', 'paid', 'overdue'], default: 'unpaid' },
   dueDate: Date,
   recurring: { type: Boolean, default: false },
   pdfUrl: String,

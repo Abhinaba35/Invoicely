@@ -1,39 +1,89 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useAppContext } from "../contexts/appContext";
 import { axiosInstance } from "../axios/axiosInstance";
-import { ErrorToast } from "../utils/toastHelper";
+import { ErrorToast, SuccessToast } from "../utils/toastHelper";
 import { Navbar } from "../components/navbar";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { MdOutlineCloudUpload } from "react-icons/md";
+import { SyncLoader } from "react-spinners";
+
+const DUMMY_IMAGE =
+    "https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-profile-picture-business-profile-woman-suitable-social-media-profiles-icons-screensavers-as-templatex9_719432-1351.jpg?semt=ais_hybrid&w=740";
 
 const ProfilePage = () => {
     const [userDetails, setUserDetails] = useState({});
     const [loadingProfile, setLoadingProfile] = useState(false);
+    const [isImageUploading, setIsImageUploading] = useState(false);
+    const inputFileRef = useRef(null);
+    const { setUser } = useAppContext();
 
     const getUserDetails = async () => {
         try {
             setLoadingProfile(true);
             const resp = await axiosInstance.get("/users/details");
             setUserDetails(resp.data.data.user);
+            if (setUser) {
+                setUser((prev) => ({ ...prev, ...resp.data.data.user }));
+            }
         } catch (err) {
             ErrorToast(`${err.response?.data?.message || err.message}`);
         } finally {
-            setTimeout(() => setLoadingProfile(false), 5000);
+            setTimeout(() => setLoadingProfile(false), 1000);
         }
     };
 
-    const handleUpdateUserDetails = (e) => {
+    const handleUpdateUserDetails = async (e) => {
         e.preventDefault();
-        //...
+        const form = e.target;
+        const name = form.name.value;
+        const mobile = form.mobile.value;
+        const gender = form.gender.value;
+        try {
+            setLoadingProfile(true);
+            const resp = await axiosInstance.put("/users", { name, mobile, gender });
+            SuccessToast("Profile updated!");
+            setUserDetails(resp.data.data.user);
+            if (setUser) {
+                setUser((prev) => ({ ...prev, ...resp.data.data.user }));
+            }
+        } catch (err) {
+            ErrorToast(`Update failed: ${err.response?.data?.message || err.message}`);
+        } finally {
+            setLoadingProfile(false);
+        }
+    };
+
+    const handleDPUpload = async (e) => {
+        try {
+            setIsImageUploading(true);
+            const formData = new FormData();
+            formData.append("displayPicture", e.target.files[0]);
+            const resp = await axiosInstance.put("/users/display-picture", formData);
+            SuccessToast("Image Uploaded!");
+            setUserDetails(resp.data.data.user);
+            if (setUser) {
+                setUser((prev) => ({ ...prev, ...resp.data.data.user }));
+            }
+        } catch (err) {
+            ErrorToast(`Image upload failed: ${err.message}`);
+        } finally {
+            setIsImageUploading(false);
+        }
     };
 
     useEffect(() => {
         getUserDetails();
     }, []);
 
+    const handleDisplayPictureContainerClick = () => {
+        inputFileRef.current.click();
+    };
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-indigo-200">
+        <div className="min-h-screen w-full bg-gradient-to-br from-blue-300 via-white to-blue-200" >
             <Navbar />
-            <div className="flex justify-center items-center py-10">
+            <div className="flex flex-col items-center justify-center min-h-[90vh] w-full">
                 {loadingProfile ? (
                     <div className="py-10 flex items-center justify-center">
                         <SkeletonTheme baseColor="#808080" highlightColor="#444">
@@ -56,54 +106,93 @@ const ProfilePage = () => {
                         </SkeletonTheme>
                     </div>
                 ) : (
-                    <form className="flex flex-col p-8 gap-6 bg-white rounded-2xl shadow-2xl border border-indigo-100 w-full max-w-lg" onSubmit={handleUpdateUserDetails}>
-                        <h1 className="text-3xl font-extrabold text-indigo-700 mb-4 text-center tracking-tight drop-shadow">Profile Page</h1>
-                        <div className="flex flex-col items-center mb-4">
-                            <div className="w-28 h-28 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden border-2 border-indigo-300 mb-2">
-                                <img src={userDetails.image || ""} alt="Profile" className="object-cover w-full h-full" />
+                    <>
+                        <form className="flex flex-col p-8 gap-6 bg-white rounded-2xl shadow-lg border border-blue-100 max-w-lg w-full mx-auto mt-4" onSubmit={handleUpdateUserDetails}>
+                            <h2 className="text-2xl font-bold text-blue-700 mb-2 text-center">Profile Details</h2>
+
+                            <div className="flex justify-center my-2">
+                                <button
+                                    type="button"
+                                    className="relative flex items-center justify-center h-32 w-32 md:h-40 md:w-40 lg:h-48 lg:w-48 rounded-full overflow-hidden border-4 border-white shadow-xl bg-gradient-to-br from-blue-200 to-blue-400 cursor-pointer hover:shadow-2xl transition-all focus:outline-none"
+                                    onClick={handleDisplayPictureContainerClick}
+                                    tabIndex={0}
+                                    aria-label="Change profile picture"
+                                >
+                                    <img
+                                        src={userDetails.imageUrl ? userDetails.imageUrl : DUMMY_IMAGE}
+                                        className="object-cover h-full w-full"
+                                        alt="Profile"
+                                    />
+                                    {isImageUploading ? (
+                                        <SyncLoader className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-12 w-12 border-yellow-400!" />
+                                    ) : (
+                                        <MdOutlineCloudUpload className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-12 w-12 text-amber-900 opacity-80" />
+                                    )}
+                                </button>
+                                <input
+                                    type="file"
+                                    onChange={handleDPUpload}
+                                    className="py-1 px-2 border-1 border-gray-400 rounded-md hidden"
+                                    ref={inputFileRef}
+                                    tabIndex={-1}
+                                />
                             </div>
-                        </div>
-                        <div>
-                            <label className="block text-gray-700 font-medium mb-1">Email</label>
-                            <input
-                                defaultValue={userDetails.email}
-                                type="text"
-                                name="email"
-                                className="py-2 px-3 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed w-full text-gray-500"
-                                disabled
-                            />
-                        </div>
-                        <p className="px-2 py-1 border rounded-md bg-lime-200 text-sm w-fit font-semibold uppercase tracking-wide">{userDetails.role}</p>
-                        <div>
-                            <label className="block text-gray-700 font-medium mb-1">Name</label>
-                            <input
-                                defaultValue={userDetails.name}
-                                type="text"
-                                name="name"
-                                className="py-2 px-3 border border-indigo-200 rounded-md w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none transition"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-gray-700 font-medium mb-1">Gender</label>
-                            <select
-                                defaultValue={userDetails.gender || "not-allowed"}
-                                name="gender"
-                                className="py-2 px-3 border border-indigo-200 rounded-md w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none transition"
-                            >
-                                <option value="not-allowed">---select---</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                            </select>
-                        </div>
-                        <div className="flex justify-center mt-4">
-                            <button type="submit" className="bg-indigo-600 text-white px-8 py-2 rounded-full shadow-lg hover:bg-indigo-700 transition font-semibold text-lg">Update Profile</button>
-                        </div>
-                    </form>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-gray-700 font-medium" htmlFor="profile-email">Email</label>
+                                <input
+                                    id="profile-email"
+                                    value={userDetails.email || ''}
+                                    type="email"
+                                    name="email"
+                                    className="border border-blue-200 rounded-md py-2 px-3 text-blue-700 bg-gray-100 cursor-not-allowed focus:outline-none"
+                                    disabled
+                                />
+                            </div>
+                            
+                            <div className="flex flex-col gap-1">
+                                <label className="text-gray-700 font-medium" htmlFor="profile-name">Name</label>
+                                <input
+                                    id="profile-name"
+                                    type="text"
+                                    name="name"
+                                    defaultValue={userDetails.name || ''}
+                                    className="border border-blue-200 rounded-md py-2 px-3 text-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none transition"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-gray-700 font-medium" htmlFor="profile-mobile">Mobile Number</label>
+                                <input
+                                    id="profile-mobile"
+                                    type="tel"
+                                    name="mobile"
+                                    defaultValue={userDetails.mobile || ''}
+                                    pattern="[0-9]{10}"
+                                    maxLength={10}
+                                    className="border border-blue-200 rounded-md py-2 px-3 text-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none transition"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-gray-700 font-medium" htmlFor="profile-gender">Gender</label>
+                                <select
+                                    id="profile-gender"
+                                    name="gender"
+                                    defaultValue={userDetails.gender || ''}
+                                    className="border border-blue-200 rounded-md py-2 px-3 text-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none transition"
+                                >
+                                    <option value="">Select Gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                </select>
+                            </div>
+                            <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-semibold shadow transition mt-2">Update Profile</button>
+                        </form>
+                       
+                    </>
                 )}
+                <div></div>
             </div>
         </div>
     );
 };
 
 export { ProfilePage };
-
