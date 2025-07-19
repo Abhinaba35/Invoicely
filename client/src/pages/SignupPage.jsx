@@ -1,4 +1,6 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import Skeleton from "../components/Skeleton";
+import ClipLoader from "react-spinners/ClipLoader";
 import { Link, useNavigate } from "react-router";
 import { axiosInstance } from "../axios/axiosInstance";
 import { ErrorToast, SuccessToast } from "../utils/toastHelper";
@@ -6,6 +8,8 @@ import { Navbar } from "../components/navbar";
 
 const SignupPage = () => {
     const [isOtpSent, setIsOtpSent] = useState(false);
+    const [otpCooldown, setOtpCooldown] = useState(0);
+    const [otpLoading, setOtpLoading] = useState(false);
     const [otp, setOtp] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -49,6 +53,7 @@ const SignupPage = () => {
     };
 
     const handleSendOtp = async () => {
+        setOtpLoading(true);
         try {
             const resp = await axiosInstance.post("/auth/send-otp", {
                 email,
@@ -56,21 +61,61 @@ const SignupPage = () => {
             if (resp.data.isSuccess) {
                 SuccessToast(resp.data.message);
                 setIsOtpSent(true);
+                setOtpCooldown(60);
             } else {
                 SuccessToast(resp.data.message);
             }
         } catch (err) {
             console.log(err);
             ErrorToast(`Cannot send otp: ${err.response?.data?.message || err.message}`);
+        } finally {
+            setOtpLoading(false);
         }
     };
+
+    // OTP cooldown timer
+    // Optionally, show skeleton for 500ms on mount for better UX
+    const [showSkeleton, setShowSkeleton] = useState(true);
+    useEffect(() => {
+        const t = setTimeout(() => setShowSkeleton(false), 500);
+        return () => clearTimeout(t);
+    }, []);
+
+    useEffect(() => {
+        if (otpCooldown > 0) {
+            const timer = setTimeout(() => setOtpCooldown(otpCooldown - 1), 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [otpCooldown]);
+
+    if (showSkeleton) {
+        return (
+            <>
+                <Navbar />
+                <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200 flex items-center justify-center py-8">
+                    <div className="w-full max-w-4xl p-0 bg-white rounded-2xl shadow-2xl border border-blue-100 flex flex-col md:flex-row gap-0">
+                        <div className="flex-1 p-8 flex flex-col gap-6 justify-center">
+                            <Skeleton height={36} width="60%" className="mb-4 mx-auto" />
+                            <Skeleton height={48} className="mb-3 rounded" />
+                            <Skeleton height={48} className="mb-3 rounded" />
+                            <Skeleton height={48} className="mb-3 rounded" />
+                            <Skeleton height={48} className="mb-3 rounded" />
+                        </div>
+                        <div className="hidden md:flex flex-1 items-center justify-center bg-blue-50 rounded-r-2xl">
+                            <Skeleton height={220} width={180} className="mx-auto rounded-xl" />
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    }
 
     return (
         <>
         <Navbar />
         <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200 flex items-center justify-center py-8">
             <div className="w-full max-w-4xl p-0 bg-white rounded-2xl shadow-2xl border border-blue-100 flex flex-col md:flex-row gap-0">
-                {/* Left: Form */}
+                
                 <div className="flex-1 p-8 flex flex-col gap-6 justify-center">
                   <h1 className="text-3xl font-extrabold text-blue-700 mb-2 text-center tracking-tight drop-shadow">Sign Up</h1>
                   <form className="flex flex-col gap-5 w-full" onSubmit={e => e.preventDefault()}>
@@ -167,9 +212,18 @@ const SignupPage = () => {
                         ) : (
                             <button
                                 onClick={handleSendOtp}
-                                className="w-full py-2 rounded-full text-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow transition"
+                                className={`w-full py-2 rounded-full text-lg font-semibold shadow transition disabled:opacity-60 disabled:cursor-not-allowed ${otpLoading ? 'bg-yellow-400 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
+                                disabled={otpCooldown > 0 || otpLoading}
+                                style={{ position: 'relative' }}
                             >
-                                Send OTP
+                                {otpLoading ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <ClipLoader size={22} color="#fff" />
+                                        Sending...
+                                    </span>
+                                ) : (
+                                    otpCooldown > 0 ? `Send OTP (${otpCooldown}s)` : "Send OTP"
+                                )}
                             </button>
                         )}
                         <p className="flex flex-col gap-2 items-center justify-center text-gray-600 text-sm mt-2">
@@ -181,7 +235,7 @@ const SignupPage = () => {
                     </div>
                   </form>
                 </div>
-                {/* Right: Illustration */}
+                
                 <div className="hidden md:flex flex-1 items-center justify-center bg-blue-50 rounded-r-2xl">
                   <img src="/undraw_authentication_tbfc.svg" alt="Sign up illustration" className="w-4/5 max-w-xs mx-auto" />
                 </div>

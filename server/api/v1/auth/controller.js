@@ -31,10 +31,9 @@ const userSignupController = async (req, res) => {
 
         const { otp: hashedOtp } = sentOtpDoc;
 
-        const isCorrect = bcrypt.compare(otp.toString(), hashedOtp);
-
+        const isCorrect = await bcrypt.compare(otp.toString(), hashedOtp);
         if (!isCorrect) {
-            res.status(400).json({ isSuccess: false, message: "Incorrect otp! Please try again...", data: {} });
+            return res.status(400).json({ isSuccess: false, message: "Incorrect otp! Please try again...", data: {} });
         }
 
         await UserModel.create({ email, password });

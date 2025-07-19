@@ -1,9 +1,11 @@
 const Invoice = require('../../../models/invoiceSchema');
 const Expense = require('../../../models/expenseSchema');
 
+const mongoose = require('mongoose');
 exports.getDashboardAnalytics = async (req, res) => {
   try {
-    const userId = req.user._id;
+    // Ensure userId is an ObjectId for aggregation
+    const userId = new mongoose.Types.ObjectId(req.user._id);
 
     // Total income (sum of paid invoices)
     const totalIncome = await Invoice.aggregate([
@@ -53,13 +55,25 @@ exports.getDashboardAnalytics = async (req, res) => {
       { $group: { _id: "$status", count: { $sum: 1 } } }
     ]);
 
+    // Total balance
+    const totalBalance = (totalIncome[0]?.total || 0) - (totalExpenses[0]?.total || 0);
+
+    // Category-wise expense aggregation
+    const categoryExpenses = await Expense.aggregate([
+      { $match: { user: userId } },
+      { $group: { _id: "$category", total: { $sum: "$amount" } } },
+      { $sort: { total: -1 } }
+    ]);
+
     res.json({
       totalIncome: totalIncome[0]?.total || 0,
       totalExpenses: totalExpenses[0]?.total || 0,
+      totalBalance,
       monthlyIncome,
       monthlyExpenses,
       topClients,
-      statusBreakdown
+      statusBreakdown,
+      categoryExpenses
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -68,7 +68,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* CTA */}
+      
       <section className="py-16 px-4 text-center bg-blue-50">
         <h3 className="text-2xl sm:text-3xl font-bold mb-4">
           Ready to take control of your business finances?

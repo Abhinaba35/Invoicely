@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
+import Skeleton, { SkeletonText } from "../components/Skeleton";
 import api from "../services/api";
 import ExpenseForm from "../components/ExpenseForm";
 import { Navbar } from "../components/navbar";
+
 import { ErrorToast } from "../utils/toastHelper";
+import { exportToExcel } from "../utils/exportToExcel";
 
 const ExpensePage = () => {
   const [expenses, setExpenses] = useState([]);
@@ -13,6 +16,7 @@ const ExpensePage = () => {
   const [viewing, setViewing] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -51,16 +55,71 @@ const ExpensePage = () => {
     }
   };
 
-  if (loading) return <div className="p-8">Loading expenses...</div>;
+  if (loading) return (
+    <div className="p-8 max-w-5xl mx-auto">
+      <Skeleton width="40%" height={36} className="mb-6" />
+      <Skeleton height={60} className="mb-6 rounded" />
+      <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+        <Skeleton width="160px" height={36} />
+      </div>
+      <div className="overflow-x-auto shadow">
+        <table className="min-w-full border bg-white">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="p-2 border">Category</th>
+              <th className="p-2 border">Amount</th>
+              <th className="p-2 border">Date</th>
+              <th className="p-2 border w-56">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <tr key={i}>
+                <td className="p-2 border"><Skeleton width="80px" /></td>
+                <td className="p-2 border"><Skeleton width="60px" /></td>
+                <td className="p-2 border"><Skeleton width="90px" /></td>
+                <td className="p-2 border w-56"><Skeleton width="100%" height={32} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
   if (error) return <div className="p-8 text-red-500">{error}</div>;
 
+  // Download as Excel (CSV)
+  const handleDownloadExcel = () => {
+    exportToExcel({
+      data: expenses.map(exp => ({
+        category: exp.category,
+        amount: exp.amount,
+        date: exp.date ? new Date(exp.date).toLocaleDateString() : "-"
+      })),
+      columns: [
+        { header: "Category", key: "category" },
+        { header: "Amount", key: "amount" },
+        { header: "Date", key: "date" },
+      ],
+      filename: "expenses.csv"
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-white to-pink-200">
+    <div className="min-h-screen bg-gradient-to-br from-pink-200 via-white to-pink-200">
       <Navbar />
       <div className="p-8 max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-4 text-pink-800 drop-shadow">Expenses</h1>
         <ExpenseForm onSuccess={() => setRefresh(r => !r)} />
         {deleteError && <div className="text-red-500 mb-2">{deleteError}</div>}
+        <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+          <button
+            className="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow transition"
+            onClick={handleDownloadExcel}
+          >
+            Download as CSV
+          </button>
+        </div>
         <div className="overflow-x-auto shadow">
           <table className="min-w-full border bg-white">
         <thead>
@@ -106,9 +165,9 @@ const ExpensePage = () => {
           </table>
         </div>
       </div>
-      {/* Edit Modal */}
+      
       {editing && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded shadow-lg w-full max-w-lg">
             <h2 className="text-xl font-bold mb-2">Edit Expense</h2>
             <ExpenseForm
@@ -121,9 +180,9 @@ const ExpensePage = () => {
           </div>
         </div>
       )}
-      {/* View Modal */}
+      
       {viewing && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded shadow-lg w-full max-w-sm">
             <h2 className="text-xl font-bold mb-4 text-pink-700">Expense Details</h2>
             <div className="space-y-3">
@@ -145,9 +204,16 @@ const ExpensePage = () => {
                   <span className="text-gray-900">{viewing.notes}</span>
                 </div>
               )}
-              {/* Add more fields if needed */}
+              
             </div>
-            <button className="mt-4 text-pink-700 underline font-semibold" onClick={closeView}>Close</button>
+            <div className="flex gap-4 mt-4">
+              <button
+                className="px-4 py-2 rounded-full bg-pink-600 hover:bg-pink-700 text-white font-semibold shadow transition mr-2"
+                onClick={closeView}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

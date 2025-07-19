@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Skeleton from "../components/Skeleton";
 import { Link } from "react-router";
 import { axiosInstance } from "../axios/axiosInstance";
 import { ErrorToast, SuccessToast } from "../utils/toastHelper";
@@ -33,12 +34,42 @@ const LoginPage = () => {
         }
     };
 
+    const [formLoading, setFormLoading] = useState(false);
+
+    
+    const [showSkeleton, setShowSkeleton] = useState(true);
+    useEffect(() => {
+        const t = setTimeout(() => setShowSkeleton(false), 500);
+        return () => clearTimeout(t);
+    }, []);
+
+    if (showSkeleton || formLoading) {
+        return (
+            <>
+                <Navbar />
+                <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200 flex items-center justify-center py-8">
+                    <div className="w-full max-w-4xl p-0 bg-white rounded-2xl shadow-2xl border border-blue-100 flex flex-col md:flex-row gap-0">
+                        <div className="flex-1 p-8 flex flex-col gap-6 justify-center">
+                            <Skeleton height={36} width="60%" className="mb-4 mx-auto" />
+                            <Skeleton height={48} className="mb-3 rounded" />
+                            <Skeleton height={48} className="mb-3 rounded" />
+                            <Skeleton height={48} className="mb-3 rounded" />
+                        </div>
+                        <div className="hidden md:flex flex-1 items-center justify-center bg-blue-50 rounded-r-2xl">
+                            <Skeleton height={220} width={180} className="mx-auto rounded-xl" />
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    }
+
     return (
         <>
         <Navbar />
         <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200 flex items-center justify-center py-8">
             <div className="w-full max-w-4xl p-0 bg-white rounded-2xl shadow-2xl border border-blue-100 flex flex-col md:flex-row gap-0">
-                {/* Left: Form */}
+                
                 <div className="flex-1 p-8 flex flex-col gap-6 justify-center">
                   <h1 className="text-3xl font-extrabold text-blue-700 mb-2 text-center tracking-tight drop-shadow">Login</h1>
                   <form className="flex flex-col gap-5 w-full" onSubmit={e => e.preventDefault()}>

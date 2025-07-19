@@ -1,4 +1,4 @@
-// Update user profile (name, mobile, gender)
+
 const updateUserProfileController = async (req, res) => {
     try {
         const { _id } = req.user;

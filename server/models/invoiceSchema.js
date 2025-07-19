@@ -16,12 +16,21 @@ const invoiceSchema = new mongoose.Schema({
     }
   ],
   total: Number,
-  status: { type: String, enum: ['unpaid', 'paid', 'overdue'], default: 'unpaid' },
+  status: { 
+    type: String,
+    enum: ['unpaid', 'paid', 'overdue'], default: 'unpaid' 
+  },
   dueDate: Date,
-  recurring: { type: Boolean, default: false },
+  recurring: { 
+    type: Boolean, 
+    default: false
+  },
   pdfUrl: String,
   paymentLink: String,
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { 
+    type: Date, 
+    default: Date.now
+   }
 });
 
 module.exports = mongoose.model('Invoice', invoiceSchema); 

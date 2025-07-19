@@ -22,13 +22,12 @@ const AppContextProvider = ({ children }) => {
                     isAuthenticated: true,
                     ...resp.data.data.user,
                 });
-            } else {
-                ErrorToast("Error in user validation", resp.data.message);
             }
         } catch (err) {
-            console.log("------------------ error otherwise");
-            ErrorToast("Error in user validation", err.message);
-            //todo
+            // Only show error if not 401 (unauthenticated), to avoid popup on Home
+            if (err.response?.status !== 401) {
+                ErrorToast("Error in user validation", err.message);
+            }
         } finally {
             setAppLoading(false);
         }

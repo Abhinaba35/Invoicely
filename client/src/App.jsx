@@ -21,12 +21,17 @@ const App = () => {
 
   if (appLoading) {
     return (
-      <div className="min-h-[100vh] flex flex-col items-center justify-center gap-10 content-center">
-        <BounceLoader size="175" color="#2020ff" />
-        <div className="border-1 border-lime-800 p-8 rounded-lg">
-          <p>Please note:</p>
-          <p>Backend is hosted on free server</p>
-          <p>It may take upto 2 minutes to warmup (for the first time)!</p>
+      <div className="min-h-[100vh] flex flex-col items-center justify-center gap-10 bg-gradient-to-br from-blue-200 via-white to-blue-400 animate-fade-in">
+        <div className="flex flex-col items-center justify-center gap-6">
+          <BounceLoader size={175} color="#2020ff" />
+          <div className="bg-white/90 border-2 border-emerald-400 shadow-lg p-8 rounded-2xl flex flex-col items-center max-w-md animate-pulse">
+            <p className="text-lg font-bold text-emerald-700 mb-2 flex items-center gap-2">
+              <svg className="w-6 h-6 text-emerald-500 animate-bounce" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" /></svg>
+              Please note:
+            </p>
+            <p className="text-base text-blue-800 font-medium">Backend is hosted on a free server</p>
+            <p className="text-base text-gray-700">It may take up to <span className="font-semibold text-emerald-600">2 minutes</span> to warm up (for the first time)!</p>
+          </div>
         </div>
       </div>
     );

@@ -3,8 +3,7 @@ import { useAppContext } from "../contexts/appContext";
 import { axiosInstance } from "../axios/axiosInstance";
 import { ErrorToast, SuccessToast } from "../utils/toastHelper";
 import { Navbar } from "../components/navbar";
-import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
+import Skeleton from "../components/Skeleton";
 import { MdOutlineCloudUpload } from "react-icons/md";
 import { SyncLoader } from "react-spinners";
 
@@ -85,25 +84,16 @@ const ProfilePage = () => {
             <Navbar />
             <div className="flex flex-col items-center justify-center min-h-[90vh] w-full">
                 {loadingProfile ? (
-                    <div className="py-10 flex items-center justify-center">
-                        <SkeletonTheme baseColor="#808080" highlightColor="#444">
-                            <div className="bg-gray-200 rounded-2xl p-4 shadow-md w-full max-w-sm">
-                                {/* Image Placeholder */}
-                                <Skeleton height={180} className="rounded-xl mb-4" />
-
-                                {/* Title Placeholder */}
-                                <Skeleton height={20} width={`80%`} className="mb-2" />
-
-                                {/* Subtitle/Description Placeholder */}
-                                <Skeleton height={15} width={`60%`} className="mb-4" />
-
-                                {/* Button or Footer Placeholder */}
-                                <div className="flex justify-between items-center mt-4">
-                                    <Skeleton height={30} width={80} />
-                                    <Skeleton circle={true} height={30} width={30} />
-                                </div>
-                            </div>
-                        </SkeletonTheme>
+                    <div className="py-10 flex items-center justify-center w-full">
+                        <div className="bg-gray-100 rounded-2xl p-6 shadow-md w-full max-w-sm">
+                            <Skeleton height={120} width={120} className="rounded-full mx-auto mb-4" />
+                            <Skeleton height={24} width="60%" className="mx-auto mb-2" />
+                            <Skeleton height={18} width="80%" className="mx-auto mb-4" />
+                            <Skeleton height={18} width="80%" className="mx-auto mb-2" />
+                            <Skeleton height={18} width="80%" className="mx-auto mb-2" />
+                            <Skeleton height={18} width="80%" className="mx-auto mb-2" />
+                            <Skeleton height={40} width="60%" className="mx-auto mt-6 rounded-full" />
+                        </div>
                     </div>
                 ) : (
                     <>
