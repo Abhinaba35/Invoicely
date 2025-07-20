@@ -25,6 +25,7 @@ const LoginPage = () => {
 
             if (result.status === 200) {
                 SuccessToast(result.data.message);
+                localStorage.setItem("token", result.data.token);
                 window.open("/", "_self");
             } else {
                 ErrorToast(result.data.message);
@@ -34,16 +35,13 @@ const LoginPage = () => {
         }
     };
 
-    const [formLoading, setFormLoading] = useState(false);
-
-    
     const [showSkeleton, setShowSkeleton] = useState(true);
     useEffect(() => {
         const t = setTimeout(() => setShowSkeleton(false), 500);
         return () => clearTimeout(t);
     }, []);
 
-    if (showSkeleton || formLoading) {
+    if (showSkeleton) {
         return (
             <>
                 <Navbar />

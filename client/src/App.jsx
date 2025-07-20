@@ -8,9 +8,9 @@ import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { DashboardPage } from "./pages/DashboardPage";
-import { InvoicePage } from "./pages/InvoicePage";
 import { ExpensePage } from "./pages/ExpensePage";
 import { AIAnalysisPage } from "./pages/AIAnalysisPage";
+import InvoicePage from "./pages/InvoicePage";
 
 const App = () => {
   const { appLoading, user } = useAppContext();

@@ -17,36 +17,16 @@ const transporter = nodemailer.createTransport({
 })();
 
 const sendOtpMail = async (email, otp) => {
-    console.log("--> inside sendOtpMail", email, otp);
+    // ...existing code...
+};
+
+const sendEmail = async (to, subject, html) => {
     try {
         await transporter.sendMail({
-            from: '"Abhinaba" <team@Abhinaba.com>', // sender address
-            to: email, // list of receivers
-            subject: "Otp Verification for platform", // Subject line
-            html: `
-                <html>
-                    <head>
-                        <style>
-                            main{
-                                height: 500px;
-                                width: 500px;
-                                margin: auto;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                background-color: black;
-                                color: white;
-                                font-size: 28px;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <main>
-                            <h2>Your otp is: ${otp}</h2>
-                        </main>
-                    </body>
-                </html>
-            `,
+            from: '"Abhinaba" <team@Abhinaba.com>',
+            to,
+            subject,
+            html,
         });
         console.log("---> email sent!");
     } catch (err) {
@@ -55,4 +35,4 @@ const sendOtpMail = async (email, otp) => {
     }
 };
 
-module.exports = { sendOtpMail };
+module.exports = { sendOtpMail, sendEmail };

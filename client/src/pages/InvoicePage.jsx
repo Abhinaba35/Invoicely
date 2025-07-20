@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from "react";
-import Skeleton, { SkeletonText } from "../components/Skeleton";
+
+import React, { useState, useEffect } from "react";
+import Skeleton from "../components/Skeleton";
 import api from "../services/api";
 import InvoiceForm from "../components/InvoiceForm";
 import { Navbar } from "../components/navbar";
-
 import { ErrorToast } from "../utils/toastHelper";
 import { exportToExcel } from "../utils/exportToExcel";
+import ClipLoader from "../components/ClipLoader";
+
+
 
 const InvoicePage = () => {
+  const [sendingEmailId, setSendingEmailId] = useState(null);
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [refresh, setRefresh] = useState(false);
   const [editing, setEditing] = useState(null);
   const [viewing, setViewing] = useState(null);
@@ -55,6 +58,19 @@ const InvoicePage = () => {
     }
   };
 
+  // Send Payment Email handler
+  const handleSendEmail = async (invoiceId) => {
+    setSendingEmailId(invoiceId);
+    try {
+      await api.post(`/invoices/${invoiceId}/send-payment-email`);
+      ErrorToast("Payment email sent successfully!", "success");
+    } catch (err) {
+      ErrorToast(err.response?.data?.error || "Failed to send payment email");
+    } finally {
+      setSendingEmailId(null);
+    }
+  };
+
   if (loading) return (
     <div className="p-8 max-w-5xl mx-auto">
       <Skeleton width="40%" height={36} className="mb-6" />
@@ -89,8 +105,6 @@ const InvoicePage = () => {
       </div>
     </div>
   );
-  if (error) return <div className="p-8 text-red-500">{error}</div>;
-
   // Filtered invoices
   const filteredInvoices = statusFilter
     ? invoices.filter(inv => inv.status === statusFilter)
@@ -195,7 +209,7 @@ const InvoicePage = () => {
       </div>
       
       {editing && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-transparent bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded shadow-lg w-full max-w-lg">
             <h2 className="text-xl font-bold mb-2">Edit Invoice</h2>
             <InvoiceForm
@@ -247,6 +261,19 @@ const InvoicePage = () => {
                 </div>
               )}
             </div>
+            {(["unpaid", "overdue"].includes(viewing.status)) && (
+              <button
+                className="px-4 py-2 rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold shadow transition flex items-center justify-center min-w-[120px] mt-4"
+                onClick={() => handleSendEmail(viewing._id)}
+                disabled={sendingEmailId === viewing._id}
+              >
+                {sendingEmailId === viewing._id ? (
+                  <span className="flex items-center gap-2"><ClipLoader size={20} color="#fff" /><span>Sending...</span></span>
+                ) : (
+                  "Send Payment Email"
+                )}
+              </button>
+            )}
             <div className="flex gap-4 mt-4">
               <button
                 className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow transition mr-2"
@@ -257,7 +284,6 @@ const InvoicePage = () => {
               <button
                 className="px-4 py-2 rounded-full bg-green-600 hover:bg-green-700 text-white font-semibold shadow transition"
                 onClick={() => {
-                  const printContents = document.getElementById('invoice-print-area').innerHTML;
                   const win = window.open('', '', 'height=700,width=700');
                   win.document.write(`<!DOCTYPE html><html><head><title>Invoice</title><style>
                     body { font-family: 'Inter', Arial, sans-serif; background: #f8fafc; color: #222; margin: 0; padding: 2rem; }
@@ -294,4 +320,4 @@ const InvoicePage = () => {
   );
 };
 
-export { InvoicePage }; 
+export default InvoicePage;

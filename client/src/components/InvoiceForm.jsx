@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import { ErrorToast } from "../utils/toastHelper";
 
-const InvoiceForm = ({ onSuccess, initial, isEdit, onSubmit }) => {
+const InvoiceForm = ({ onSuccess, initial, isEdit, onSubmit, onCancel }) => {
   const [form, setForm] = useState({
     client: { name: "", email: "", address: "" },
     items: [{ description: "", quantity: 1, price: 0, tax: 0 }],
@@ -10,7 +10,6 @@ const InvoiceForm = ({ onSuccess, initial, isEdit, onSubmit }) => {
     status: "unpaid",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (initial) setForm(initial);
@@ -33,10 +32,9 @@ const InvoiceForm = ({ onSuccess, initial, isEdit, onSubmit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // setError(null);
     try {
       const item = form.items[0];
-      const total = (Number(item.price)  * Number(item.tax)/100) + (Number(item.price) * Number(item.quantity));
+      const total = (Number(item.price) * Number(item.tax) / 100) + (Number(item.price) * Number(item.quantity));
       if (isEdit && onSubmit) {
         await onSubmit({ ...form, total });
       } else {
@@ -54,7 +52,6 @@ const InvoiceForm = ({ onSuccess, initial, isEdit, onSubmit }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-2xl shadow-lg mb-8 border border-blue-100 max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold mb-4 text-blue-700 drop-shadow">{isEdit ? "Edit Invoice" : "Create Invoice"}</h2>
-      {error && <div className="text-red-500 font-semibold mb-2">{error}</div>}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="flex flex-col text-left">
           <label className="mb-1 font-medium text-blue-700">Client Name</label>
@@ -105,9 +102,12 @@ const InvoiceForm = ({ onSuccess, initial, isEdit, onSubmit }) => {
           <option value="overdue">Overdue</option>
         </select>
       </div>
-      <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-semibold shadow transition" disabled={loading}>{loading ? (isEdit ? "Saving..." : "Creating...") : (isEdit ? "Save Changes" : "Create Invoice")}</button>
+      <div className="flex justify-end gap-4 mt-4">
+        {onCancel && <button type="button" onClick={onCancel} className="px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300">Cancel</button>}
+        <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-semibold shadow transition" disabled={loading}>{loading ? (isEdit ? "Saving..." : "Creating...") : (isEdit ? "Save Changes" : "Create Invoice")}</button>
+      </div>
     </form>
   );
 };
 
-export default InvoiceForm; 
+export default InvoiceForm;

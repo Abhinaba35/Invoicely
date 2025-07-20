@@ -10,13 +10,11 @@ import { exportToExcel } from "../utils/exportToExcel";
 const ExpensePage = () => {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [refresh, setRefresh] = useState(false);
   const [editing, setEditing] = useState(null);
   const [viewing, setViewing] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
-  const [search, setSearch] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -86,7 +84,6 @@ const ExpensePage = () => {
       </div>
     </div>
   );
-  if (error) return <div className="p-8 text-red-500">{error}</div>;
 
   // Download as Excel (CSV)
   const handleDownloadExcel = () => {
@@ -167,7 +164,7 @@ const ExpensePage = () => {
       </div>
       
       {editing && (
-        <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-transparent bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded shadow-lg w-full max-w-lg">
             <h2 className="text-xl font-bold mb-2">Edit Expense</h2>
             <ExpenseForm
@@ -221,4 +218,4 @@ const ExpensePage = () => {
   );
 };
 
-export { ExpensePage }; 
+export { ExpensePage };
