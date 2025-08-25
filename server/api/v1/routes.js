@@ -5,6 +5,7 @@ const { userAuthenticationMiddleware } = require("./middleware");
 const { invoicesRouter } = require("./invoices/routes");
 const { expensesRouter } = require("./expenses/routes");
 const { dashboardRouter } = require("./dashboard/routes");
+const { run } = require("./analysis/gemini");
 
 const apiRouter = express.Router();
 
@@ -18,7 +19,7 @@ apiRouter.use("/users", usersRouter);
 apiRouter.use("/invoices", invoicesRouter);
 apiRouter.use("/expenses", expensesRouter);
 apiRouter.use("/dashboard", dashboardRouter);
+apiRouter.post("/analysis/rag", run);
 
 
 module.exports = { apiRouter };
-

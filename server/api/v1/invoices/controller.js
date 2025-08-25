@@ -1,5 +1,6 @@
 const Invoice = require('../../../models/invoiceSchema');
 const { sendEmail } = require('../../../utils/emailHelpers');
+const dotEnv = require('dotenv');
 const Razorpay = require('razorpay');
 
 const sendInvoiceEmail = async (req, res) => {
@@ -33,7 +34,7 @@ const sendInvoiceEmail = async (req, res) => {
         email: true,
       },
       reminder_enable: true,
-      callback_url: `https://your-frontend.com/invoices`,
+      callback_url: `process.env.FRONTEND_URL/invoices`,
       callback_method: 'get',
     });
 
@@ -132,9 +133,16 @@ const listInvoices = async (req, res) => {
 };
 const updateInvoice = async (req, res) => {
   try {
+    const { status } = req.body;
+    const updateData = { ...req.body };
+
+    if (status === 'paid') {
+      updateData.paidAt = new Date();
+    }
+
     const updated = await Invoice.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id },
-      req.body,
+      updateData,
       { new: true }
     );
     if (!updated) return res.status(404).json({ error: 'Invoice not found' });
@@ -153,6 +161,18 @@ const deleteInvoice = async (req, res) => {
   }
 };
 
+const backfillPaidInvoices = async (req, res) => {
+  try {
+    const result = await Invoice.updateMany(
+      { status: 'paid', paidAt: { $exists: false } },
+      { $set: { paidAt: new Date() } }
+    );
+    res.json({ message: 'Backfill complete', result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 module.exports = {
   createInvoice,
   getInvoice,
@@ -160,4 +180,5 @@ module.exports = {
   updateInvoice,
   deleteInvoice,
   sendInvoiceEmail,
+  backfillPaidInvoices,
 };

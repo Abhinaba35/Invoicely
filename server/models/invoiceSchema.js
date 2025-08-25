@@ -30,7 +30,10 @@ const invoiceSchema = new mongoose.Schema({
   createdAt: { 
     type: Date, 
     default: Date.now
-   }
+   },
+  paidAt: {
+    type: Date
+  }
 });
 
-module.exports = mongoose.model('Invoice', invoiceSchema); 
+module.exports = mongoose.model('Invoice', invoiceSchema);

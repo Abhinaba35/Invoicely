@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Skeleton, { SkeletonText } from "../components/Skeleton";
 import api from "../services/api";
-import { Bar, Pie } from "react-chartjs-2";
+import { Bar, Pie, Line } from "react-chartjs-2";
 import { Navbar } from "../components/navbar";
 import {
   Chart as ChartJS,
@@ -12,10 +12,22 @@ import {
   Title,
   Tooltip,
   Legend,
+  PointElement,
+  LineElement,
 } from "chart.js";
 import { ErrorToast } from "../utils/toastHelper";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  PointElement,
+  LineElement
+);
 
 const DashboardPage = () => {
   const [data, setData] = useState(null);
@@ -55,31 +67,44 @@ const DashboardPage = () => {
 
   
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const incomeData = Array(6).fill(0);
-  const expenseData = Array(6).fill(0);
-  let chartLabels = [];
-  if (data.monthlyIncome.length || data.monthlyExpenses.length) {
-    
-    const all = [...data.monthlyIncome, ...data.monthlyExpenses];
-    const sorted = all.sort((a, b) => {
-      if (a._id.year !== b._id.year) return a._id.year - b._id.year;
-      return a._id.month - b._id.month;
-    });
-    chartLabels = sorted.map(x => `${months[x._id.month - 1]} '${String(x._id.year).slice(-2)}`);
-    
-    data.monthlyIncome.forEach((x, i) => {
-      incomeData[i] = x.total;
-    });
-    data.monthlyExpenses.forEach((x, i) => {
-      expenseData[i] = x.total;
-    });
-  }
+  
+  const allMonths = new Map();
+  [...data.monthlyIncome, ...data.monthlyExpenses].forEach(item => {
+    const label = `${months[item._id.month - 1]} '${String(item._id.year).slice(-2)}`;
+    if (!allMonths.has(label)) {
+      allMonths.set(label, { year: item._id.year, month: item._id.month, income: 0, expense: 0 });
+    }
+  });
+
+  data.monthlyIncome.forEach(item => {
+    const label = `${months[item._id.month - 1]} '${String(item._id.year).slice(-2)}`;
+    if (allMonths.has(label)) {
+      allMonths.get(label).income = item.total;
+    }
+  });
+
+  data.monthlyExpenses.forEach(item => {
+    const label = `${months[item._id.month - 1]} '${String(item._id.year).slice(-2)}`;
+    if (allMonths.has(label)) {
+      allMonths.get(label).expense = item.total;
+    }
+  });
+
+  const sortedMonths = Array.from(allMonths.values()).sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year;
+    return a.month - b.month;
+  });
+
+  const chartLabels = sortedMonths.map(item => `${months[item.month - 1]} '${String(item.year).slice(-2)}`);
+  const incomeData = sortedMonths.map(item => item.income);
+  const expenseData = sortedMonths.map(item => item.expense);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-400 via-white to-blue-400">
       <Navbar />
       <div className="p-8 max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold mb-4 text-emerald-800 drop-shadow">Dashboard</h1>
+
         <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-green-100 p-4 rounded shadow flex flex-col items-center">
             <div className="text-lg">Total Income</div>
@@ -95,48 +120,55 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Monthly Income vs Expenses and Top Clients in one row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          {/* Monthly Income vs Expenses Chart */}
+          {/* Yearly Income vs Expenses Chart */}
           <div className="bg-white p-4 rounded shadow flex flex-col items-center justify-center">
-            <h2 className="text-xl font-semibold mb-2 text-center">Monthly Income vs Expenses</h2>
-            <div style={{ width: '100%', maxWidth: 520, height: 340 }}>
-              <Bar
-                key={JSON.stringify(chartLabels) + JSON.stringify(incomeData) + JSON.stringify(expenseData)}
-                data={{
-                  labels: chartLabels,
-                  datasets: [
-                    {
-                      label: "Income",
-                      data: incomeData,
-                      backgroundColor: "rgba(16, 185, 129, 0.7)",
-                      borderRadius: 8,
-                      barThickness: 28,
+            <h2 className="text-xl font-semibold mb-2 text-center">Yearly Income vs Expenses</h2>
+            <p className="text-sm text-gray-500 mb-2">(Income is based on paid invoices)</p>
+            <div style={{ width: '100%', height: 340 }}>
+              {chartLabels.length > 0 ? (
+                <Bar
+                  key={JSON.stringify(chartLabels) + JSON.stringify(incomeData) + JSON.stringify(expenseData)}
+                  data={{
+                    labels: chartLabels,
+                    datasets: [
+                      {
+                        label: "Income",
+                        data: incomeData,
+                        backgroundColor: "rgba(16, 185, 129, 0.7)",
+                        borderRadius: 8,
+                        barThickness: 28,
+                      },
+                      {
+                        label: "Expenses",
+                        data: expenseData,
+                        backgroundColor: "rgba(239, 68, 68, 0.7)",
+                        borderRadius: 8,
+                        barThickness: 28,
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { position: "bottom" },
+                      title: { display: false },
                     },
-                    {
-                      label: "Expenses",
-                      data: expenseData,
-                      backgroundColor: "rgba(239, 68, 68, 0.7)",
-                      borderRadius: 8,
-                      barThickness: 28,
+                    scales: {
+                      x: { grid: { display: false } },
+                      y: { grid: { color: "#e5e7eb" } },
                     },
-                  ],
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { position: "bottom" },
-                    title: { display: false },
-                  },
-                  scales: {
-                    x: { grid: { display: false } },
-                    y: { grid: { color: "#e5e7eb" } },
-                  },
-                }}
-              />
+                  }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-gray-500">No income or expense data available.</p>
+                </div>
+              )}
             </div>
           </div>
+
           {/* Top Clients with better CSS */}
           <div className="bg-white p-4 rounded shadow flex flex-col items-center justify-center">
             <h2 className="text-xl font-semibold mb-2 text-center">Top Clients</h2>

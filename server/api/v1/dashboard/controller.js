@@ -19,21 +19,24 @@ exports.getDashboardAnalytics = async (req, res) => {
       { $group: { _id: null, total: { $sum: "$amount" } } }
     ]);
 
-    // Monthly income/expense (last 6 months)
-    const now = new Date();
-    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-
     const monthlyIncome = await Invoice.aggregate([
-      { $match: { user: userId, createdAt: { $gte: sixMonthsAgo }, status: 'paid' } },
-      { $group: {
-        _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
-        total: { $sum: "$total" }
-      } },
+      { $match: { user: userId, status: 'paid' } },
+      {
+        $addFields: {
+          paymentDate: { $ifNull: ["$paidAt", "$createdAt"] }
+        }
+      },
+      {
+        $group: {
+          _id: { year: { $year: "$paymentDate" }, month: { $month: "$paymentDate" } },
+          total: { $sum: "$total" }
+        }
+      },
       { $sort: { '_id.year': 1, '_id.month': 1 } }
     ]);
 
     const monthlyExpenses = await Expense.aggregate([
-      { $match: { user: userId, createdAt: { $gte: sixMonthsAgo } } },
+      { $match: { user: userId } },
       { $group: {
         _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
         total: { $sum: "$amount" }
@@ -78,4 +81,4 @@ exports.getDashboardAnalytics = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-}; 
+};
