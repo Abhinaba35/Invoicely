@@ -10,7 +10,7 @@ const nanoid = customAlphabet("1234567890", 6);
 const userSignupController = async (req, res) => {
     console.log("--> inside userSignupController");
     try {
-        const { email, password, otp } = req.body;
+        const { email, password, otp, name, mobile, gender } = req.body;
         // check if user already exists
         const user = await UserModel.findOne({
             email: email,
@@ -23,20 +23,31 @@ const userSignupController = async (req, res) => {
 
         const sentOtpDoc = await OtpModel.findOne({
             email: email,
-        }).lean();
+        }).sort({ createdAt: -1 }).lean();
 
         if (sentOtpDoc == null) {
             res.status(400).json({ isSuccess: false, message: "Please resend the otp!", data: {} });
+            return;
         }
 
         const { otp: hashedOtp } = sentOtpDoc;
 
         const isCorrect = await bcrypt.compare(otp.toString(), hashedOtp);
+        console.log("--> OTP comparison:", { providedOtp: otp, isCorrect });
         if (!isCorrect) {
             return res.status(400).json({ isSuccess: false, message: "Incorrect otp! Please try again...", data: {} });
         }
 
-        await UserModel.create({ email, password });
+        // Delete the OTP after successful verification
+        await OtpModel.deleteOne({ _id: sentOtpDoc._id });
+
+        // Create user with all provided fields
+        const userData = { email, password };
+        if (name) userData.name = name;
+        if (mobile) userData.mobileno = mobile; // Map mobile to mobileno as per schema
+        if (gender) userData.gender = gender;
+
+        await UserModel.create(userData);
 
         res.status(201).json({
             isSuccess: true,
@@ -54,6 +65,9 @@ const sendOtpController = async (req, res) => {
         const { email } = req.body;
 
         const otp = nanoid();
+
+        // Delete any existing OTP for this email before creating a new one
+        await OtpModel.deleteMany({ email });
 
         await sendOtpMail(email, otp);
 

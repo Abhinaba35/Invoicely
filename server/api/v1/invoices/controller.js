@@ -16,6 +16,10 @@ const sendInvoiceEmail = async (req, res) => {
       return res.status(400).json({ error: 'Invoice is not unpaid or overdue' });
     }
 
+    if (!process.env.FRONTEND_URL) {
+      return res.status(500).json({ error: 'FRONTEND_URL environment variable is not set' });
+    }
+
     const razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_KEY_SECRET,
@@ -34,7 +38,7 @@ const sendInvoiceEmail = async (req, res) => {
         email: true,
       },
       reminder_enable: true,
-      callback_url: `process.env.FRONTEND_URL/invoices`,
+      callback_url: `${process.env.FRONTEND_URL}/invoices`,
       callback_method: 'get',
     });
 
@@ -105,8 +109,9 @@ const sendInvoiceEmail = async (req, res) => {
 
     res.status(200).json({ message: 'Email sent successfully' });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error sending email' });
+    console.error('Error sending payment email:', error);
+    const errorMessage = error.error?.description || error.message || 'Error sending email';
+    res.status(500).json({ error: errorMessage });
   }
 };
 
