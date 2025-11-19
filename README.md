@@ -1,4 +1,4 @@
-# InvoicelyAI
+# Invoicely
 
 A full-stack AI-powered invoice and expense management application.
 
